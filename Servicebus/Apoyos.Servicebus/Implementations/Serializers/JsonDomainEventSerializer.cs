@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Apoyos.Servicebus.Contracts;
 
-namespace Apoyos.Servicebus.Abstractions.Serializers
+namespace Apoyos.Servicebus.Implementations.Serializers
 {
     /// <summary>
     /// Handles (de)serializing domain events using <see cref="JsonSerializer"/>
