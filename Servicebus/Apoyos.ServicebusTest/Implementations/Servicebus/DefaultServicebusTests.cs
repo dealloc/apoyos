@@ -37,12 +37,6 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
             });
             _config.Object.CurrentValue._events.Add(domainEventName, typeof(DummyEvent));
         }
-        
-        [Fact]
-        public void DefaultServicebusTest()
-        {
-            throw new NotImplementedException();
-        }
 
         [Fact]
         public async Task PublishAsyncTest()
