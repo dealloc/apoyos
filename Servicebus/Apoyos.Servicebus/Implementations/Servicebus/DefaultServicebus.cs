@@ -1,7 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
+using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Apoyos.Servicebus.Implementations.Servicebus
 {
@@ -11,15 +15,17 @@ namespace Apoyos.Servicebus.Implementations.Servicebus
     public class DefaultServicebus : IServicebus
     {
         private readonly ILogger _logger;
+        private readonly IOptionsMonitor<ServicebusConfiguration> _config;
         private readonly IDomainEventSerializer _serializer;
         private readonly IMessageTransport _transport;
 
         /// <summary>
         /// Create a new instance of <see cref="DefaultServicebus"/>.
         /// </summary>
-        public DefaultServicebus(ILogger logger, IDomainEventSerializer serializer, IMessageTransport transport)
+        public DefaultServicebus(ILogger logger, IOptionsMonitor<ServicebusConfiguration> config, IDomainEventSerializer serializer, IMessageTransport transport)
         {
             _logger = logger;
+            _config = config;
             _serializer = serializer;
             _transport = transport;
         }
@@ -27,12 +33,35 @@ namespace Apoyos.Servicebus.Implementations.Servicebus
         /// <inheritdoc cref="IServicebus.PublishAsync{TEvent}" />
         public async Task PublishAsync<TEvent>(TEvent domainEvent) where TEvent : class, new()
         {
-            const string serviceName = "TODO"; // We should retrieve this from configuration.
+            var serviceName = _config.CurrentValue.ServiceName;
+            var eventName = GetEventName<TEvent>();
             var metadata = new MessageMetadata<TEvent>(serviceName, domainEvent);
             var serialized = await _serializer.SerializeAsync(metadata).ConfigureAwait(false);
             
-            _logger.LogInformation("Dispatch {RequestId}", metadata.Identifier);
-            await _transport.SendMessageAsync(serviceName, serialized).ConfigureAwait(false);
+            _logger.LogInformation("Dispatching {EventName} {RequestId}", eventName, metadata.Identifier);
+            await _transport.SendMessageAsync(eventName, serialized).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Get the configured name of <typeparamref name="TEvent"/>.
+        /// </summary>
+        /// <returns>The application name for <typeparamref name="TEvent"/> as configured in <see cref="ServicebusConfiguration"/>.</returns>
+        /// <exception cref="Exception">When <typeparamref name="TEvent"/> is not (correctly) configured.</exception>
+        private string GetEventName<TEvent>()
+        {
+            var typeName = typeof(TEvent).Name;
+            var name = _config.CurrentValue.Events
+                .Where(p => p.Value.Equals(typeName, StringComparison.InvariantCulture))
+                .Select(p => p.Key)
+                .FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                // TODO: specialize exception.
+                throw new Exception($"There's no name configured for event type {typeof(TEvent).FullName}.");
+            }
+
+            return name;
         }
     }
 }
