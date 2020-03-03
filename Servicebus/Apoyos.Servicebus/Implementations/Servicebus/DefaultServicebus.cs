@@ -49,9 +49,8 @@ namespace Apoyos.Servicebus.Implementations.Servicebus
         /// <exception cref="Exception">When <typeparamref name="TEvent"/> is not (correctly) configured.</exception>
         private string GetEventName<TEvent>()
         {
-            var typeName = typeof(TEvent).Name;
             var name = _config.CurrentValue.Events
-                .Where(p => p.Value.Equals(typeName, StringComparison.InvariantCulture))
+                .Where(p => p.Value == typeof(TEvent))
                 .Select(p => p.Key)
                 .FirstOrDefault();
 

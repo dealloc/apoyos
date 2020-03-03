@@ -2,10 +2,7 @@
 #pragma warning disable CA2007 // ConfigureAwait
 #pragma warning disable CS8618 // Nullable property not initialized
 using Xunit;
-using Apoyos.Servicebus.Implementations.Servicebus;
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
 using Apoyos.Servicebus.Configuration;
@@ -36,12 +33,9 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
             
             _config.Setup(o => o.CurrentValue).Returns(new ServicebusConfiguration
             {
-                ServiceName = serviceName,
-                Events = new Dictionary<string, string>
-                {
-                    {domainEventName, typeof(DummyEvent).Name}
-                }
+                ServiceName = serviceName
             });
+            _config.Object.CurrentValue._events.Add(domainEventName, typeof(DummyEvent));
         }
         
         [Fact]
