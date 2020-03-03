@@ -17,7 +17,7 @@ namespace Apoyos.Servicebus.Configuration
         /// <summary>
         /// The events that the servicebus can dispatch and/or respond to.
         /// </summary>
-        /// <example>{"user.create", CreateUserEvent}</example>
+        /// <example>{"user.create", "CreateUserEvent"}</example>
         public Dictionary<string, string> Events { get; set; } = new Dictionary<string, string>();
     }
 }
