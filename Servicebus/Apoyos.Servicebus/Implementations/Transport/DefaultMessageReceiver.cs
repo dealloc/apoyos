@@ -16,14 +16,14 @@ namespace Apoyos.Servicebus.Implementations.Transport
     public class DefaultMessageReceiver : IMessageReceiver
     {
         private readonly ServicebusConfiguration _configuration;
-        private readonly ServiceProvider _serviceProvider;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IDomainEventSerializer _serializer;
         private readonly MethodInfo _deserializeMethod;
 
         /// <summary>
         /// Create a new instance of <see cref="DefaultMessageReceiver"/>.
         /// </summary>
-        public DefaultMessageReceiver(IOptions<ServicebusConfiguration> options, ServiceProvider serviceProvider, IDomainEventSerializer serializer)
+        public DefaultMessageReceiver(IOptions<ServicebusConfiguration> options, IServiceProvider serviceProvider, IDomainEventSerializer serializer)
         {
             _configuration = options.Value;
             _serviceProvider = serviceProvider;

@@ -14,7 +14,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus
     /// </summary>
     public class DefaultServicebus : IServicebus
     {
-        private readonly ILogger _logger;
+        private readonly ILogger<DefaultServicebus> _logger;
         private readonly IOptionsMonitor<ServicebusConfiguration> _config;
         private readonly IDomainEventSerializer _serializer;
         private readonly IMessageTransport _transport;
@@ -22,7 +22,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus
         /// <summary>
         /// Create a new instance of <see cref="DefaultServicebus"/>.
         /// </summary>
-        public DefaultServicebus(ILogger logger, IOptionsMonitor<ServicebusConfiguration> config, IDomainEventSerializer serializer, IMessageTransport transport)
+        public DefaultServicebus(ILogger<DefaultServicebus> logger, IOptionsMonitor<ServicebusConfiguration> config, IDomainEventSerializer serializer, IMessageTransport transport)
         {
             _logger = logger;
             _config = config;

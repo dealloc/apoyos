@@ -15,7 +15,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
 {
     public class DefaultServicebusTests
     {
-        private readonly Mock<ILogger> _logger;
+        private readonly Mock<ILogger<DefaultServicebus>> _logger;
         private readonly Mock<IOptionsMonitor<ServicebusConfiguration>> _config;
         private readonly Mock<IDomainEventSerializer> _serializer;
         private readonly Mock<IMessageTransport> _transport;
@@ -25,7 +25,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
 
         public DefaultServicebusTests()
         {
-            _logger = new Mock<ILogger>();
+            _logger = new Mock<ILogger<DefaultServicebus>>();
             _config = new Mock<IOptionsMonitor<ServicebusConfiguration>>();
             _serializer = new Mock<IDomainEventSerializer>();
             _transport = new Mock<IMessageTransport>();
