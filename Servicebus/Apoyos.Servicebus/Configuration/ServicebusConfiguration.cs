@@ -18,7 +18,7 @@ namespace Apoyos.Servicebus.Configuration
 
         /// <summary>
         /// The events that the servicebus can dispatch and/or respond to.
-        /// To add events, see <see cref="ServiceCollectionExtensions.AddDomainEvent{TEvent}"/> and <see cref="ServiceCollectionExtensions.AddDomainEventListener{TEvent}"/>
+        /// To add events, see <see cref="ServiceCollectionExtensions.AddDomainEvent{TEvent}"/> and <see cref="ServiceCollectionExtensions.AddDomainEventListener{TEvent,THandler}"/>
         /// </summary>
         /// <example>{"user.create", CreateUserEvent}</example>
         public IReadOnlyDictionary<string, Type> Events => _events;

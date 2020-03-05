@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
 using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
+using Apoyos.Servicebus.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -56,8 +57,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                // TODO: specialize exception.
-                throw new Exception($"There's no name configured for event type {typeof(TEvent).FullName}.");
+                throw new UnknownEventException($"There's no name configured for event type {typeof(TEvent).FullName}.");
             }
 
             return name;

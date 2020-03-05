@@ -16,11 +16,12 @@ namespace Apoyos.Servicebus.Extensions
         /// <param name="services">The <see cref="IServiceCollection"/> to which the event listener will be added.</param>
         /// <param name="name">The domain name of the event for which a listener is being added.</param>
         /// <typeparam name="TEvent">The domain event for which to register a listener.</typeparam>
-        public static void AddDomainEventListener<TEvent>(this IServiceCollection services, string name) where TEvent : class, new()
+        /// <typeparam name="THandler">The type of the handler to register for <typeparamref name="TEvent"/>.</typeparam>
+        public static void AddDomainEventListener<TEvent, THandler>(this IServiceCollection services, string name) where TEvent : class, new() where THandler : class, IDomainEventHandler<TEvent>
         {
             services.Configure<ServicebusConfiguration>(config => config._events.Add(name, typeof(TEvent)));
             
-            services.TryAddTransient<IDomainEventHandler<TEvent>>();
+            services.TryAddTransient<IDomainEventHandler<TEvent>, THandler>();
         }
 
         /// <summary>
@@ -29,7 +30,7 @@ namespace Apoyos.Servicebus.Extensions
         /// <param name="services">The <see cref="IServiceCollection"/> to which the event listener will be added.</param>
         /// <param name="name">The domain name of the event for which a listener is being added.</param>
         /// <typeparam name="TEvent">The domain event for which to register a listener.</typeparam>
-        /// <seealso cref="AddDomainEventListener{TEvent}"/>
+        /// <seealso cref="AddDomainEventListener{TEvent,THandler}"/>
         public static void AddDomainEvent<TEvent>(this IServiceCollection services, string name) where TEvent : class, new()
         {
             services.Configure<ServicebusConfiguration>(config => config._events.Add(name, typeof(TEvent)));

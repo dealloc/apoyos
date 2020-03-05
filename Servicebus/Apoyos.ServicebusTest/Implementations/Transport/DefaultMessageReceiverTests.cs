@@ -9,6 +9,7 @@ using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
 using Xunit;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -17,6 +18,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
     public class DefaultMessageReceiverTests
     {
         private readonly Mock<IOptions<ServicebusConfiguration>> _options;
+        private readonly Mock<ILogger<DefaultMessageReceiver>> _logger;
         private readonly ServiceCollection _services;
         private readonly Mock<IDomainEventSerializer> _serializer;
         private readonly Mock<IDomainEventHandler<DummyEvent>> _handler;
@@ -28,6 +30,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
         public DefaultMessageReceiverTests()
         {
             _options = new Mock<IOptions<ServicebusConfiguration>>();
+            _logger = new Mock<ILogger<DefaultMessageReceiver>>();
             _services = new ServiceCollection();
             _serializer = new Mock<IDomainEventSerializer>();
             _handler = new Mock<IDomainEventHandler<DummyEvent>>();
@@ -46,7 +49,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
         public async Task HandleIncomingTest()
         {
             var metadata = new MessageMetadata<DummyEvent>(ServiceName, _domainEvent);
-            var receiver = new DefaultMessageReceiver(_options.Object, _services.BuildServiceProvider(), _serializer.Object);
+            var receiver = new DefaultMessageReceiver(_options.Object, _logger.Object, _services.BuildServiceProvider(), _serializer.Object);
 
             _serializer.Setup(s => s.DeserializeAsync<MessageMetadata<DummyEvent>>(_serializedDomainEvent, default))
                 .Returns(Task.FromResult(metadata));
@@ -59,7 +62,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
         [Fact]
         public async Task handleIncomingWaitsForHandlers()
         {
-            var receiver = new DefaultMessageReceiver(_options.Object, _services.BuildServiceProvider(), _serializer.Object);
+            var receiver = new DefaultMessageReceiver(_options.Object, _logger.Object, _services.BuildServiceProvider(), _serializer.Object);
             var handlerTask = new TaskCompletionSource<int>();
 
             _serializer.Setup(s => s.DeserializeAsync<MessageMetadata<DummyEvent>>(_serializedDomainEvent, default))

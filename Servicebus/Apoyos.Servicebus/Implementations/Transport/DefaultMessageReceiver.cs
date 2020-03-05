@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
 using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
+using Apoyos.Servicebus.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Apoyos.Servicebus.Implementations.Transport
@@ -16,6 +18,7 @@ namespace Apoyos.Servicebus.Implementations.Transport
     public class DefaultMessageReceiver : IMessageReceiver
     {
         private readonly ServicebusConfiguration _configuration;
+        private readonly ILogger<DefaultMessageReceiver> _logger;
         private readonly IServiceProvider _serviceProvider;
         private readonly IDomainEventSerializer _serializer;
         private readonly MethodInfo _deserializeMethod;
@@ -23,9 +26,10 @@ namespace Apoyos.Servicebus.Implementations.Transport
         /// <summary>
         /// Create a new instance of <see cref="DefaultMessageReceiver"/>.
         /// </summary>
-        public DefaultMessageReceiver(IOptions<ServicebusConfiguration> options, IServiceProvider serviceProvider, IDomainEventSerializer serializer)
+        public DefaultMessageReceiver(IOptions<ServicebusConfiguration> options, ILogger<DefaultMessageReceiver> logger, IServiceProvider serviceProvider, IDomainEventSerializer serializer)
         {
             _configuration = options.Value;
+            _logger = logger;
             _serviceProvider = serviceProvider;
             _serializer = serializer;
 
@@ -56,16 +60,31 @@ namespace Apoyos.Servicebus.Implementations.Transport
                 CancellationToken.None
             });
             await deserializedTask.ConfigureAwait(false);
-            
-            var deserialized = ((dynamic) deserializedTask).Result.Event;
 
             if (handlerType.GetMethod(nameof(IDomainEventHandler<object>.HandleAsync)) is { } handleMethod)
             {
-                // TODO: do we want to support multiple handlers? How do we approach fault handling, order of execution etc then?
-                await ((Task)handleMethod.Invoke(handler, new[]
+                // TODO: we might want to optimize the dynamic code calls here a little.
+                var metadata = ((dynamic) deserializedTask).Result;
+                var deserialized = metadata.Event;
+
+                var envelope = (metadata as BaseMessageMetadata);
+                if (string.IsNullOrWhiteSpace(envelope?.Identifier) || envelope.CreatedOn == DateTime.UnixEpoch || deserialized == null)
                 {
-                    deserialized
-                })).ConfigureAwait(false);
+                    throw new PoisonedMessageException($"Cannot process incoming message for {eventName}.");
+                }
+                
+                _logger.LogDebug("Handling incoming message {RequestId}", envelope?.Identifier);
+                try
+                {
+                    await ((Task)handleMethod.Invoke(handler, new[]
+                    {
+                        deserialized
+                    })).ConfigureAwait(false);
+                }
+                catch (Exception exception)
+                {
+                    throw new DomainEventHandlerException($"An exception occured while executing {handlerType.FullName}.{nameof(IDomainEventHandler<object>.HandleAsync)}", exception);
+                }
             }
         }
     }
