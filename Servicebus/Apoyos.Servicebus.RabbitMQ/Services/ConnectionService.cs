@@ -20,9 +20,9 @@ namespace Apoyos.Servicebus.RabbitMQ.Services
         /// <summary>
         /// Create a new instance of <see cref="ConnectionService"/>.
         /// </summary>
-        public ConnectionService(IOptions<RabbitMqConfiguration> options)
+        public ConnectionService(IOptions<RabbitMqServicebusConfiguration> options)
         {
-            _configuration = options.Value;
+            _configuration = options.Value.RabbitMQ;
         }
 
         /// <summary>
@@ -35,6 +35,8 @@ namespace Apoyos.Servicebus.RabbitMQ.Services
             {
                 HostName = _configuration.Hostname,
                 VirtualHost = _configuration.VirtualHost,
+                UserName = _configuration.Username,
+                Password = _configuration.Password,
                 DispatchConsumersAsync = true
             }.CreateConnection();
 

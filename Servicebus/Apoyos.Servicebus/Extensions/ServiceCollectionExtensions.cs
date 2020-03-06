@@ -19,7 +19,7 @@ namespace Apoyos.Servicebus.Extensions
         /// <typeparam name="THandler">The type of the handler to register for <typeparamref name="TEvent"/>.</typeparam>
         public static void AddDomainEventListener<TEvent, THandler>(this IServiceCollection services, string name) where TEvent : class, new() where THandler : class, IDomainEventHandler<TEvent>
         {
-            services.Configure<ServicebusConfiguration>(config => config._events.Add(name, typeof(TEvent)));
+            services.AddDomainEvent<TEvent>(name);
             
             services.TryAddTransient<IDomainEventHandler<TEvent>, THandler>();
         }

@@ -26,9 +26,9 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
         /// <summary>
         /// Create new instance of <see cref="HostedRabbitMqService"/>.
         /// </summary>
-        public HostedRabbitMqService(IOptions<RabbitMqConfiguration> options, ILogger<HostedRabbitMqService> logger, ConnectionService connectionService, IMessageReceiver messageReceiver)
+        public HostedRabbitMqService(IOptions<RabbitMqServicebusConfiguration> options, ILogger<HostedRabbitMqService> logger, ConnectionService connectionService, IMessageReceiver messageReceiver)
         {
-            _configuration = options.Value;
+            _configuration = options.Value.RabbitMQ;
             _logger = logger;
             _connectionService = connectionService;
             _messageReceiver = messageReceiver;

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Apoyos.Servicebus.RabbitMQ.Configuration
 {
     /// <summary>
-    /// Contains the configuration of the servicebus for RabbitMQ.
+    /// Contains the configuration of RabbitMQ.
     /// </summary>
     public class RabbitMqConfiguration
     {
@@ -17,6 +17,16 @@ namespace Apoyos.Servicebus.RabbitMQ.Configuration
         /// The VirtualHost RabbitMQ to connect to.
         /// </summary>
         public string VirtualHost { get; set; } = "/";
+
+        /// <summary>
+        /// The username to authenticate to RabbitMQ.
+        /// </summary>
+        public string Username { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The password to authenticate to RabbitMQ.
+        /// </summary>
+        public string Password { get; set; } = string.Empty;
         
         /// <summary>
         /// Configures which queues match to which domain event.

@@ -27,6 +27,6 @@ namespace Apoyos.Servicebus.Configuration
         /// The events that the servicebus can dispatch and/or respond to.
         /// </summary>
         /// <seealso cref="Events"/>
-        internal readonly Dictionary<string, Type> _events = new Dictionary<string, Type>();
+        protected internal readonly Dictionary<string, Type> _events = new Dictionary<string, Type>();
     }
 }
