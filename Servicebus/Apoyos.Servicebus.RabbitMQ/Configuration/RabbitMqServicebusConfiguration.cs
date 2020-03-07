@@ -7,6 +7,9 @@ namespace Apoyos.Servicebus.RabbitMQ.Configuration
     /// </summary>
     public class RabbitMqServicebusConfiguration : ServicebusConfiguration
     {
+        /// <summary>
+        /// The configuration for RabbitMQ.
+        /// </summary>
         public RabbitMqConfiguration RabbitMQ { get; set; } = new RabbitMqConfiguration();
     }
 }

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Apoyos.Servicebus.Contracts;
 using Apoyos.Servicebus.Exceptions;
 using Apoyos.Servicebus.RabbitMQ.Configuration;
-using Apoyos.Servicebus.RabbitMQ.Services;
+using Apoyos.Servicebus.RabbitMQ.Contracts;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,13 +20,13 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
     {
         private readonly RabbitMqConfiguration _configuration;
         private readonly ILogger _logger;
-        private readonly ConnectionService _connectionService;
+        private readonly IConnectionService _connectionService;
         private readonly IMessageReceiver _messageReceiver;
 
         /// <summary>
         /// Create new instance of <see cref="HostedRabbitMqService"/>.
         /// </summary>
-        public HostedRabbitMqService(IOptions<RabbitMqServicebusConfiguration> options, ILogger<HostedRabbitMqService> logger, ConnectionService connectionService, IMessageReceiver messageReceiver)
+        public HostedRabbitMqService(IOptions<RabbitMqServicebusConfiguration> options, ILogger<HostedRabbitMqService> logger, IConnectionService connectionService, IMessageReceiver messageReceiver)
         {
             _configuration = options.Value.RabbitMQ;
             _logger = logger;

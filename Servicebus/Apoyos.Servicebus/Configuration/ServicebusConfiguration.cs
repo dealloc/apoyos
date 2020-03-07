@@ -1,4 +1,5 @@
 ﻿#pragma warning disable CA2227 // Configuration can contain mutable generics.
+#pragma warning disable CA1051 // Do not declare visible instance fields.
 using System;
 using System.Collections.Generic;
 using Apoyos.Servicebus.Extensions;

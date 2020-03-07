@@ -1,10 +1,9 @@
-﻿using System;
-using Apoyos.Servicebus.Configuration;
+﻿using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
 using Apoyos.Servicebus.Implementations.Serializers;
-using Apoyos.Servicebus.Implementations.Servicebus;
 using Apoyos.Servicebus.Implementations.Transport;
 using Apoyos.Servicebus.RabbitMQ.Configuration;
+using Apoyos.Servicebus.RabbitMQ.Contracts;
 using Apoyos.Servicebus.RabbitMQ.Hosted;
 using Apoyos.Servicebus.RabbitMQ.Services;
 using Microsoft.Extensions.Configuration;
@@ -34,7 +33,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Extensions
             // Add services.
             services.AddSingleton<IOptions<ServicebusConfiguration>>(p => p.GetRequiredService<IOptions<RabbitMqServicebusConfiguration>>());
             services.AddSingleton<IOptionsMonitor<ServicebusConfiguration>>(p => p.GetRequiredService<IOptionsMonitor<RabbitMqServicebusConfiguration>>());
-            services.AddSingleton<ConnectionService>();
+            services.AddSingleton<IConnectionService, ConnectionService>();
             services.AddSingleton<IDomainEventSerializer, JsonDomainEventSerializer>();
             services.AddSingleton<IMessageReceiver, DefaultMessageReceiver>();
             // services.AddSingleton<IServicebus, DefaultServicebus>();
