@@ -56,17 +56,19 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
                     autoDelete: false,
                     arguments: null);
                 
+                _logger.LogDebug("Bound event '{EventName}' to {QueueName} (backout -> {BackoutQueue}", eventName, queueName, backoutQueue);
                 var consumer = new AsyncEventingBasicConsumer(channel);
                 consumer.Received += async (sender, message) =>
                 {
                     try
                     {
+                        _logger.LogDebug("Incoming message on {QueueName}", queueName);
                         await _messageReceiver.HandleIncoming(eventName, message.Body).ConfigureAwait(false);
                     }
                     catch (Exception  exception) when (exception is PoisonedMessageException || exception is DomainEventHandlerException)
                     {
-                        _logger.LogWarning(exception, "Failed to process {TagId} due to exception.",
-                            message.DeliveryTag);
+                        _logger.LogWarning(exception, "Failed to process {ConsumerTag}+{DeliveryTag} due to exception.",
+                            message.ConsumerTag, message.DeliveryTag);
 
                         channel.BasicPublish(
                             exchange: string.Empty, // Default exchange.
