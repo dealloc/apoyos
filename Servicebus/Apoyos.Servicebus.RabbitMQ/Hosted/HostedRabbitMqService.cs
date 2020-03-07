@@ -39,6 +39,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
         {
             await _connectionService.ConnectAsync().ConfigureAwait(false);
 
+            // TODO: basic verification that every registered event has a queue, otherwise the event would never fire (or cannot be fired).
             foreach (var (eventName, queueName) in _configuration.Queues)
             {
                 var channel = _connectionService.GetChannel(); // Note the absence of "using" statement here, since we want to keep the channels around. They are automatically cleaned up when the connection closes.
@@ -85,6 +86,9 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
                 channel.BasicQos(0, prefetchCount: 1, global: false); // Only preload one message at a time.
                 channel.BasicConsume(queueName, autoAck: false, consumer);
             }
+
+            // Wait until stoppingToken indicates the service should stop.
+            await Task.Delay(-1, stoppingToken).ConfigureAwait(false);
         }
     }
 }
