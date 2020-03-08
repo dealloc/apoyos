@@ -2,23 +2,20 @@
 #pragma warning disable CA2007 // ConfigureAwait
 #pragma warning disable CS8618 // Nullable property not initialized
 #pragma warning disable CA1034 // Do not nest DummyEvent
-using System;
 using System.Collections.Generic;
-using Xunit;
 using System.Threading;
 using System.Threading.Tasks;
 using Apoyos.Servicebus.Contracts;
 using Apoyos.Servicebus.Exceptions;
-using Apoyos.Servicebus.Extensions;
 using Apoyos.Servicebus.RabbitMQ.Configuration;
 using Apoyos.Servicebus.RabbitMQ.Contracts;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Framing;
+using Xunit;
 
 namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
 {
@@ -43,12 +40,14 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
             _connectionService = new Mock<IConnectionService>();
             _messageReceiver = new Mock<IMessageReceiver>();
 
-            var services = new ServiceCollection();
-            services.AddDomainEvent<DummyEvent>(EventName);
-            services.Configure<RabbitMqServicebusConfiguration>(config =>
+            _options.Setup(o => o.Value).Returns(new RabbitMqServicebusConfiguration
             {
-                config.ServiceName = ServiceName;
-                config.RabbitMQ = new RabbitMqConfiguration
+                ServiceName = ServiceName,
+                Events =
+                {
+                    {EventName, typeof(DummyEvent)}
+                },
+                RabbitMQ = new RabbitMqConfiguration
                 {
                     Hostname = RabbitMQHostname,
                     Username = RabbitMQUsername,
@@ -58,11 +57,8 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
                     {
                         {EventName, QueueName}
                     }
-                };
+                }
             });
-            
-            var config = services.BuildServiceProvider().GetRequiredService<IOptions<RabbitMqServicebusConfiguration>>().Value;
-            _options.Setup(o => o.Value).Returns(config);
         }
         
         [Fact]

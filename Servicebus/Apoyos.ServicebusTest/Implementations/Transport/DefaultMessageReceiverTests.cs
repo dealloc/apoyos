@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
 using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
-using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using Xunit;
 
 namespace Apoyos.Servicebus.Implementations.Transport.Tests
 {
@@ -40,9 +40,12 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
             _services.AddTransient(p => _handler.Object);
             _options.Setup(o => o.Value).Returns(new ServicebusConfiguration
             {
-                ServiceName = ServiceName
+                ServiceName = ServiceName,
+                Events =
+                {
+                    {EventName, typeof(DummyEvent)}
+                }
             });
-            _options.Object.Value._events.Add(EventName, typeof(DummyEvent));
         }
         
         [Fact]

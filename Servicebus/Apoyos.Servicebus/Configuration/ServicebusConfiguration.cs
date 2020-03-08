@@ -1,8 +1,6 @@
 ﻿#pragma warning disable CA2227 // Configuration can contain mutable generics.
-#pragma warning disable CA1051 // Do not declare visible instance fields.
 using System;
 using System.Collections.Generic;
-using Apoyos.Servicebus.Extensions;
 
 namespace Apoyos.Servicebus.Configuration
 {
@@ -19,15 +17,8 @@ namespace Apoyos.Servicebus.Configuration
 
         /// <summary>
         /// The events that the servicebus can dispatch and/or respond to.
-        /// To add events, see <see cref="ServiceCollectionExtensions.AddDomainEvent{TEvent}"/> and <see cref="ServiceCollectionExtensions.AddDomainEventListener{TEvent,THandler}"/>
         /// </summary>
         /// <example>{"user.create", CreateUserEvent}</example>
-        public IReadOnlyDictionary<string, Type> Events => _events;
-        
-        /// <summary>
-        /// The events that the servicebus can dispatch and/or respond to.
-        /// </summary>
-        /// <seealso cref="Events"/>
-        protected internal readonly Dictionary<string, Type> _events = new Dictionary<string, Type>();
+        public Dictionary<string, Type> Events { get; set; } = new Dictionary<string, Type>();
     }
 }
