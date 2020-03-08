@@ -58,6 +58,8 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
                     arguments: null);
                 
                 _logger.LogDebug("Bound event '{EventName}' to {QueueName} (backout -> {BackoutQueue}", eventName, queueName, backoutQueue);
+                
+                // TODO: if we're only going to be publishing an event, we don't need to register a listener for it.
                 var consumer = new AsyncEventingBasicConsumer(channel);
                 consumer.Received += async (sender, message) =>
                 {
@@ -95,7 +97,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
         public Task SendMessageAsync(string eventName, byte[] message)
         {
             // TODO: creating a new channel for each message is expensive.
-            var channel = _connectionService.GetChannel();
+            using var channel = _connectionService.GetChannel();
             var queueName = _configuration.Queues[eventName];
 
             channel.BasicPublish(
