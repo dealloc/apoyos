@@ -16,7 +16,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
     /// <summary>
     /// Handles the lifecycle of the ("physical") connection to the RabbitMQ server.
     /// </summary>
-    public class HostedRabbitMqService : BackgroundService
+    public class HostedRabbitMqService : BackgroundService, IMessageTransport
     {
         private readonly RabbitMqConfiguration _configuration;
         private readonly ILogger _logger;
@@ -89,6 +89,22 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
 
             // Wait until stoppingToken indicates the service should stop.
             await Task.Delay(-1, stoppingToken).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc cref="IMessageTransport.SendMessageAsync" />
+        public Task SendMessageAsync(string eventName, byte[] message)
+        {
+            // TODO: creating a new channel for each message is expensive.
+            var channel = _connectionService.GetChannel();
+            var queueName = _configuration.Queues[eventName];
+
+            channel.BasicPublish(
+                exchange: string.Empty, // Default exchange.
+                routingKey: queueName,
+                basicProperties: channel.CreateBasicProperties(),
+                body: message);
+            
+            return Task.CompletedTask;
         }
     }
 }

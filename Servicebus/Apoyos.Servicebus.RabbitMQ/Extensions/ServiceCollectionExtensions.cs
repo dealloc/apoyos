@@ -1,6 +1,8 @@
-﻿using Apoyos.Servicebus.Configuration;
+﻿using System;
+using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
 using Apoyos.Servicebus.Implementations.Serializers;
+using Apoyos.Servicebus.Implementations.Servicebus;
 using Apoyos.Servicebus.Implementations.Transport;
 using Apoyos.Servicebus.RabbitMQ.Configuration;
 using Apoyos.Servicebus.RabbitMQ.Contracts;
@@ -22,11 +24,13 @@ namespace Apoyos.Servicebus.RabbitMQ.Extensions
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to which the services will be added.</param>
         /// <param name="configuration">The configuration section to bind.</param>
-        public static void AddRabbitMQ(this IServiceCollection services, IConfiguration configuration)
+        /// <param name="configure">Configure the <see cref="RabbitMqServicebusConfiguration"/> instance (add events, queues, ...).</param>
+        public static void AddRabbitMQ(this IServiceCollection services, IConfiguration configuration, Action<RabbitMqServicebusConfiguration>? configure = default)
         {
-            if (configuration != null)
+            services.Configure<RabbitMqServicebusConfiguration>(configuration);
+            if (configure != null)
             {
-                services.Configure<RabbitMqServicebusConfiguration>(configuration);
+                services.Configure(configure);
             }
             
             
@@ -36,8 +40,11 @@ namespace Apoyos.Servicebus.RabbitMQ.Extensions
             services.AddSingleton<IConnectionService, ConnectionService>();
             services.AddSingleton<IDomainEventSerializer, JsonDomainEventSerializer>();
             services.AddSingleton<IMessageReceiver, DefaultMessageReceiver>();
-            // services.AddSingleton<IServicebus, DefaultServicebus>();
-            services.AddHostedService<HostedRabbitMqService>();
+            services.AddSingleton<IServicebus, DefaultServicebus>();
+
+            services.AddSingleton<HostedRabbitMqService>();
+            services.AddSingleton<IMessageTransport>(p => p.GetRequiredService<HostedRabbitMqService>());
+            services.AddHostedService(p => p.GetRequiredService<HostedRabbitMqService>());
         }
     }
 }
