@@ -25,7 +25,6 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
         private byte[] _serializedDomainEvent;
         private DummyEvent _domainEvent;
         private const string ServiceName = "XUNIT";
-        private const string EventName = "xunit.dummy";
 
         public DefaultMessageReceiverTests()
         {
@@ -40,11 +39,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
             _services.AddTransient(p => _handler.Object);
             _options.Setup(o => o.Value).Returns(new ServicebusConfiguration
             {
-                ServiceName = ServiceName,
-                Events =
-                {
-                    {EventName, typeof(DummyEvent)}
-                }
+                ServiceName = ServiceName
             });
         }
         
@@ -58,7 +53,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
                 .Returns(Task.FromResult(metadata));
             _handler.Setup(h => h.HandleAsync(_domainEvent)).Verifiable();
 
-            await receiver.HandleIncoming(EventName, _serializedDomainEvent);
+            await receiver.HandleIncoming(typeof(DummyEvent), _serializedDomainEvent);
             _handler.Verify();
         }
 
@@ -71,7 +66,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
             _serializer.Setup(s => s.DeserializeAsync<MessageMetadata<DummyEvent>>(_serializedDomainEvent, default))
                 .Returns(Task.FromResult(new MessageMetadata<DummyEvent>(ServiceName, _domainEvent)));
             _handler.Setup(h => h.HandleAsync(It.IsAny<DummyEvent>())).Returns(handlerTask.Task);
-            var handleIncomingTask = receiver.HandleIncoming(EventName, _serializedDomainEvent);
+            var handleIncomingTask = receiver.HandleIncoming(typeof(DummyEvent), _serializedDomainEvent);
 
             Assert.False(handleIncomingTask.IsCompleted);
             handlerTask.SetResult(1); // Simulate completion of the handler.

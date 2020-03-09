@@ -40,7 +40,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
             await _connectionService.ConnectAsync().ConfigureAwait(false);
 
             // TODO: basic verification that every registered event has a queue, otherwise the event would never fire (or cannot be fired).
-            foreach (var (eventName, queueName) in _configuration.Queues)
+            foreach (var (eventType, queueName) in _configuration.Queues)
             {
                 var channel = _connectionService.GetChannel(); // Note the absence of "using" statement here, since we want to keep the channels around. They are automatically cleaned up when the connection closes.
                 var backoutQueue = $"{queueName}.BACKOUT";
@@ -57,7 +57,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
                     autoDelete: false,
                     arguments: null);
                 
-                _logger.LogDebug("Bound event '{EventName}' to {QueueName} (backout -> {BackoutQueue}", eventName, queueName, backoutQueue);
+                _logger.LogDebug("Bound event '{EventName}' to {QueueName} (backout -> {BackoutQueue}", eventType.FullName, queueName, backoutQueue);
                 
                 // TODO: if we're only going to be publishing an event, we don't need to register a listener for it.
                 var consumer = new AsyncEventingBasicConsumer(channel);
@@ -66,7 +66,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
                     try
                     {
                         _logger.LogDebug("Incoming message on {QueueName}", queueName);
-                        await _messageReceiver.HandleIncoming(eventName, message.Body).ConfigureAwait(false);
+                        await _messageReceiver.HandleIncoming(eventType, message.Body).ConfigureAwait(false);
                     }
                     catch (Exception  exception) when (exception is PoisonedMessageException || exception is DomainEventHandlerException)
                     {
@@ -94,11 +94,11 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
         }
 
         /// <inheritdoc cref="IMessageTransport.SendMessageAsync" />
-        public Task SendMessageAsync(string eventName, byte[] message)
+        public Task SendMessageAsync<TEvent>(byte[] message) where TEvent : class, new()
         {
             // TODO: creating a new channel for each message is expensive.
             using var channel = _connectionService.GetChannel();
-            var queueName = _configuration.Queues[eventName];
+            var queueName = _configuration.Queues[typeof(TEvent)];
 
             channel.BasicPublish(
                 exchange: string.Empty, // Default exchange.

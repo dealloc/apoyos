@@ -1,10 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
 using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
-using Apoyos.Servicebus.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -35,32 +32,11 @@ namespace Apoyos.Servicebus.Implementations.Servicebus
         public async Task PublishAsync<TEvent>(TEvent domainEvent) where TEvent : class, new()
         {
             var serviceName = _config.CurrentValue.ServiceName;
-            var eventName = GetEventName<TEvent>();
             var metadata = new MessageMetadata<TEvent>(serviceName, domainEvent);
             var serialized = await _serializer.SerializeAsync(metadata).ConfigureAwait(false);
             
-            _logger.LogInformation("Dispatching {EventName} {RequestId}", eventName, metadata.Identifier);
-            await _transport.SendMessageAsync(eventName, serialized).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Get the configured name of <typeparamref name="TEvent"/>.
-        /// </summary>
-        /// <returns>The application name for <typeparamref name="TEvent"/> as configured in <see cref="ServicebusConfiguration"/>.</returns>
-        /// <exception cref="Exception">When <typeparamref name="TEvent"/> is not (correctly) configured.</exception>
-        private string GetEventName<TEvent>()
-        {
-            var name = _config.CurrentValue.Events
-                .Where(p => p.Value == typeof(TEvent))
-                .Select(p => p.Key)
-                .FirstOrDefault();
-
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new UnknownEventException($"There's no name configured for event type {typeof(TEvent).FullName}.");
-            }
-
-            return name;
+            _logger.LogInformation("Dispatching {EventName} {RequestId}", typeof(TEvent).FullName, metadata.Identifier);
+            await _transport.SendMessageAsync<TEvent>(serialized).ConfigureAwait(false);
         }
     }
 }

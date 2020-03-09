@@ -40,14 +40,8 @@ namespace Apoyos.Servicebus.Implementations.Transport
         }
         
         /// <inheritdoc cref="IMessageReceiver.HandleIncoming" />
-        public async Task HandleIncoming(string eventName, byte[] payload)
+        public async Task HandleIncoming(Type eventType, byte[] payload)
         {
-            if (_configuration.Events.ContainsKey(eventName) == false)
-            {
-                throw new Exception($"Unknown domain event {eventName} received.");
-            }
-
-            var eventType = _configuration.Events[eventName];
             var metadataType = typeof(MessageMetadata<>).MakeGenericType(eventType);
             var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(eventType);
             var handler = _serviceProvider.GetRequiredService(handlerType);
@@ -70,7 +64,7 @@ namespace Apoyos.Servicebus.Implementations.Transport
                 var envelope = (metadata as BaseMessageMetadata);
                 if (string.IsNullOrWhiteSpace(envelope?.Identifier) || envelope.CreatedOn == DateTime.UnixEpoch || deserialized == null)
                 {
-                    throw new PoisonedMessageException($"Cannot process incoming message for {eventName}.");
+                    throw new PoisonedMessageException($"Cannot process incoming message for {eventType.FullName}.");
                 }
                 
                 _logger.LogDebug("Handling incoming message {RequestId}", envelope?.Identifier);

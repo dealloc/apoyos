@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
 using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
-using Apoyos.Servicebus.Implementations.Transport.Tests;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -21,7 +20,6 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
         private readonly Mock<IMessageTransport> _transport;
         private readonly DefaultServicebus _bus;
         private const string serviceName = "XUNIT";
-        private const string domainEventName = "xunit.dummyevent";
 
         public DefaultServicebusTests()
         {
@@ -33,11 +31,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
             
             _config.Setup(o => o.CurrentValue).Returns(new ServicebusConfiguration
             {
-                ServiceName = serviceName,
-                Events =
-                {
-                    {domainEventName, typeof(DummyEvent)}
-                }
+                ServiceName = serviceName
             });
         }
 
@@ -50,7 +44,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
             // Setup mocks
             _serializer.Setup(s => s.SerializeAsync(It.IsAny<MessageMetadata<DummyEvent>>(), default))
                 .Returns(Task.FromResult(serializedEvent));
-            _transport.Setup(t => t.SendMessageAsync(domainEventName, serializedEvent)).Returns(Task.CompletedTask);
+            _transport.Setup(t => t.SendMessageAsync<DummyEvent>(serializedEvent)).Returns(Task.CompletedTask);
 
             // Execute tests
             await _bus.PublishAsync(domainEvent);

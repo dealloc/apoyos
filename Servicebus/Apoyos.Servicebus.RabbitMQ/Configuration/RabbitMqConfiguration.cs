@@ -1,4 +1,5 @@
 ﻿#pragma warning disable CA2227
+using System;
 using System.Collections.Generic;
 
 namespace Apoyos.Servicebus.RabbitMQ.Configuration
@@ -31,7 +32,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Configuration
         /// <summary>
         /// Configures which queues match to which domain event.
         /// </summary>
-        /// <example>{"EVENTNAME", "QUEUENAME"}</example>
-        public Dictionary<string, string> Queues { get; set; } = new Dictionary<string, string>();
+        /// <example>{EventType, "QUEUENAME"}</example>
+        public Dictionary<Type, string> Queues { get; set; } = new Dictionary<Type, string>();
     }
 }

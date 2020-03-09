@@ -30,7 +30,6 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
         private const string RabbitMQHostname = "xunit";
         private const string RabbitMQUsername = "username";
         private const string RabbitMQPassword = "emanresu";
-        private const string EventName = "dummy";
         private const string QueueName = "XUNIT.DUMMY";
         
         public HostedRabbitMqServiceTests()
@@ -43,10 +42,6 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
             _options.Setup(o => o.Value).Returns(new RabbitMqServicebusConfiguration
             {
                 ServiceName = ServiceName,
-                Events =
-                {
-                    {EventName, typeof(DummyEvent)}
-                },
                 RabbitMQ = new RabbitMqConfiguration
                 {
                     Hostname = RabbitMQHostname,
@@ -55,7 +50,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
                     VirtualHost = RabbitMQVirtualHost,
                     Queues =
                     {
-                        {EventName, QueueName}
+                        {typeof(DummyEvent), QueueName}
                     }
                 }
             });
@@ -96,7 +91,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
                     // Consumer here is an actual RabbitMQ consumer waiting for our model to fire stuff.
                     basicConsumer = consumer as AsyncEventingBasicConsumer;
                 });
-            _messageReceiver.Setup(m => m.HandleIncoming(EventName, simulatedPayload)).Returns(Task.CompletedTask).Verifiable("Message receiver was not called!");
+            _messageReceiver.Setup(m => m.HandleIncoming(typeof(DummyEvent), simulatedPayload)).Returns(Task.CompletedTask).Verifiable("Message receiver was not called!");
             
             await hosted.StartAsync(cancellation.Token);
             basicConsumer?.HandleBasicDeliver(string.Empty, 420, false, string.Empty, QueueName, new BasicProperties(), simulatedPayload);
@@ -125,7 +120,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
                     basicConsumer = consumer as AsyncEventingBasicConsumer;
                 });
 
-            _messageReceiver.Setup(m => m.HandleIncoming(EventName, simulatedPayload))
+            _messageReceiver.Setup(m => m.HandleIncoming(typeof(DummyEvent), simulatedPayload))
                 .Throws<DomainEventHandlerException>();
             
             channelMock.Setup(c => c.BasicPublish(string.Empty, $"{QueueName}.BACKOUT", false, null, simulatedPayload)).Verifiable("Backout message was not posted!");
@@ -157,7 +152,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
                     basicConsumer = consumer as AsyncEventingBasicConsumer;
                 });
 
-            _messageReceiver.Setup(m => m.HandleIncoming(EventName, simulatedPayload))
+            _messageReceiver.Setup(m => m.HandleIncoming(typeof(DummyEvent), simulatedPayload))
                 .Throws<PoisonedMessageException>();
             
             channelMock.Setup(c => c.BasicPublish(string.Empty, $"{QueueName}.BACKOUT", false, null, simulatedPayload)).Verifiable("Backout message was not posted!");
