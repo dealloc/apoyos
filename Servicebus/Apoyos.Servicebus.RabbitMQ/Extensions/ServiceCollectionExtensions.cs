@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.Contracts;
 using Apoyos.Servicebus.Implementations.Serializers;
@@ -11,6 +12,7 @@ using Apoyos.Servicebus.RabbitMQ.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 
 namespace Apoyos.Servicebus.RabbitMQ.Extensions
 {
@@ -45,6 +47,49 @@ namespace Apoyos.Servicebus.RabbitMQ.Extensions
             services.AddSingleton<HostedRabbitMqService>();
             services.AddSingleton<IMessageTransport>(p => p.GetRequiredService<HostedRabbitMqService>());
             services.AddHostedService(p => p.GetRequiredService<HostedRabbitMqService>());
+        }
+
+        /// <summary>
+        /// Add a transient <see cref="IDomainEventHandler{TEvent}"/> for <typeparamref name="TEvent"/> and register a queue for it.
+        /// </summary>
+        /// <param name="services">The services to register on.</param>
+        /// <param name="queueName">The name of the queue this event corresponds to.</param>
+        /// <param name="properties">Queue parameters, see <see cref="IModel.QueueDeclare"/>.</param>
+        /// <typeparam name="TEvent">The type of domain event to register.</typeparam>
+        /// <typeparam name="THandler">The type of the domain event handler.</typeparam>
+        public static void AddDomainEventListener<TEvent, THandler>(this IServiceCollection services, string queueName, IDictionary<string, object>? properties = default) where TEvent : class, new() where THandler : class, IDomainEventHandler<TEvent>
+        {
+            services.AddTransient<IDomainEventHandler<TEvent>, THandler>();
+
+            services.Configure<RabbitMqServicebusConfiguration>(config =>
+            {
+                config.RabbitMQ.Queues.Add(typeof(TEvent), new QueueConfiguration
+                {
+                    QueueName = queueName,
+                    Listen = true,
+                    Properties = properties
+                });
+            });
+        }
+
+        /// <summary>
+        /// Add a domain event without registering a listener for it (events you only want to publish, not handle).
+        /// </summary>
+        /// <param name="services">The services to register on.</param>
+        /// <param name="queueName">The name of the queue this event corresponds to.</param>
+        /// <param name="properties">Queue parameters, see <see cref="IModel.QueueDeclare"/>.</param>
+        /// <typeparam name="TEvent">The type of domain event to register.</typeparam>
+        public static void AddDomainEvent<TEvent>(this IServiceCollection services, string queueName, IDictionary<string, object>? properties = default) where TEvent : class, new()
+        {
+            services.Configure<RabbitMqServicebusConfiguration>(config =>
+            {
+                config.RabbitMQ.Queues.Add(typeof(TEvent), new QueueConfiguration
+                {
+                    QueueName = queueName,
+                    Listen = false,
+                    Properties = properties
+                });
+            });
         }
     }
 }

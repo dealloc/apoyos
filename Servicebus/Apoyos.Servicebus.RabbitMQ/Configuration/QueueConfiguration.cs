@@ -24,7 +24,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Configuration
         /// <summary>
         /// Passed directly into <see cref="IModel.QueueDeclare"/>.
         /// </summary>
-        public IDictionary<string, object> Properties { get; set; } = default;
+        public IDictionary<string, object>? Properties { get; set; } = null;
 
         /// <summary>
         /// Create a new <see cref="QueueConfiguration"/> from a <see cref="string"/> representing it's name.
