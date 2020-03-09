@@ -32,7 +32,6 @@ namespace Apoyos.Servicebus.RabbitMQ.Configuration
         /// <summary>
         /// Configures which queues match to which domain event.
         /// </summary>
-        /// <example>{EventType, "QUEUENAME"}</example>
-        public Dictionary<Type, string> Queues { get; set; } = new Dictionary<Type, string>();
+        public Dictionary<Type, QueueConfiguration> Queues { get; set; } = new Dictionary<Type, QueueConfiguration>();
     }
 }

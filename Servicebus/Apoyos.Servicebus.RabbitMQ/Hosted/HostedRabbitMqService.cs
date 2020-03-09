@@ -39,11 +39,10 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
         {
             await _connectionService.ConnectAsync().ConfigureAwait(false);
 
-            // TODO: basic verification that every registered event has a queue, otherwise the event would never fire (or cannot be fired).
-            foreach (var (eventType, queueName) in _configuration.Queues)
+            foreach (var (eventType, queueConfig) in _configuration.Queues)
             {
                 var channel = _connectionService.GetChannel(); // Note the absence of "using" statement here, since we want to keep the channels around. They are automatically cleaned up when the connection closes.
-                var backoutQueue = $"{queueName}.BACKOUT";
+                var backoutQueue = $"{queueConfig.QueueName}.BACKOUT";
 
                 // Channels are bound to the last queue made on them, so we create the backout queue first.
                 channel.QueueDeclare(queue: backoutQueue,
@@ -51,58 +50,61 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
                     exclusive: false,
                     autoDelete: false,
                     arguments: null);
-                channel.QueueDeclare(queue: queueName,
+                channel.QueueDeclare(queue: queueConfig.QueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
-                    arguments: null);
+                    arguments: queueConfig.Properties);
                 
-                _logger.LogDebug("Bound event '{EventName}' to {QueueName} (backout -> {BackoutQueue}", eventType.FullName, queueName, backoutQueue);
-                
-                // TODO: if we're only going to be publishing an event, we don't need to register a listener for it.
-                var consumer = new AsyncEventingBasicConsumer(channel);
-                consumer.Received += async (sender, message) =>
+                _logger.LogDebug("Bound event '{EventName}' to {QueueName} (backout -> {BackoutQueue}", eventType.FullName, queueConfig.QueueName, backoutQueue);
+
+                // TODO: I don't like the very nested "if" statement here.
+                if (queueConfig.Listen)
                 {
-                    try
+                    var consumer = new AsyncEventingBasicConsumer(channel);
+                    consumer.Received += async (sender, message) =>
                     {
-                        _logger.LogDebug("Incoming message on {QueueName}", queueName);
-                        await _messageReceiver.HandleIncoming(eventType, message.Body).ConfigureAwait(false);
-                    }
-                    catch (Exception  exception) when (exception is PoisonedMessageException || exception is DomainEventHandlerException)
-                    {
-                        _logger.LogWarning(exception, "Failed to process {ConsumerTag}+{DeliveryTag} due to exception.",
-                            message.ConsumerTag, message.DeliveryTag);
+                        try
+                        {
+                            _logger.LogDebug("Incoming message on {QueueName}", queueConfig);
+                            await _messageReceiver.HandleIncoming(eventType, message.Body).ConfigureAwait(false);
+                        }
+                        catch (Exception  exception) when (exception is PoisonedMessageException || exception is DomainEventHandlerException)
+                        {
+                            _logger.LogWarning(exception, "Failed to process {ConsumerTag}+{DeliveryTag} due to exception.",
+                                message.ConsumerTag, message.DeliveryTag);
 
-                        channel.BasicPublish(
-                            exchange: string.Empty, // Default exchange.
-                            routingKey: backoutQueue,
-                            basicProperties: channel.CreateBasicProperties(),
-                            body: message.Body);
-                    }
-                    finally
-                    {
-                        channel.BasicAck(message.DeliveryTag, multiple: false);
-                    }
-                };
+                            channel.BasicPublish(
+                                exchange: string.Empty, // Default exchange.
+                                routingKey: backoutQueue,
+                                basicProperties: channel.CreateBasicProperties(),
+                                body: message.Body);
+                        }
+                        finally
+                        {
+                            channel.BasicAck(message.DeliveryTag, multiple: false);
+                        }
+                    };
 
-                channel.BasicQos(0, prefetchCount: 1, global: false); // Only preload one message at a time.
-                channel.BasicConsume(queueName, autoAck: false, consumer);
+                    channel.BasicQos(0, prefetchCount: 1, global: false); // Only preload one message at a time.
+                    channel.BasicConsume(queueConfig.QueueName, autoAck: false, consumer);
+                }
             }
 
             // Wait until stoppingToken indicates the service should stop.
             await Task.Delay(-1, stoppingToken).ConfigureAwait(false);
         }
 
-        /// <inheritdoc cref="IMessageTransport.SendMessageAsync" />
+        /// <inheritdoc cref="IMessageTransport.SendMessageAsync{TEvent}" />
         public Task SendMessageAsync<TEvent>(byte[] message) where TEvent : class, new()
         {
             // TODO: creating a new channel for each message is expensive.
             using var channel = _connectionService.GetChannel();
-            var queueName = _configuration.Queues[typeof(TEvent)];
+            var queueConfig = _configuration.Queues[typeof(TEvent)];
 
             channel.BasicPublish(
                 exchange: string.Empty, // Default exchange.
-                routingKey: queueName,
+                routingKey: queueConfig.QueueName,
                 basicProperties: channel.CreateBasicProperties(),
                 body: message);
             
