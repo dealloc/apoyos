@@ -50,7 +50,13 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
                     VirtualHost = RabbitMQVirtualHost,
                     Queues =
                     {
-                        {typeof(DummyEvent), QueueName}
+                        {
+                            typeof(DummyEvent), new QueueConfiguration
+                            {
+                                QueueName = QueueName,
+                                Listen = true
+                            }
+                        }
                     }
                 }
             });
