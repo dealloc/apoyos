@@ -2,6 +2,7 @@
 #pragma warning disable CA2007 // ConfigureAwait
 #pragma warning disable CS8618 // Nullable property not initialized
 #pragma warning disable CA1034 // Do not nest DummyEvent
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,7 +69,6 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
             var channelMock = new Mock<IModel>();
             using var hosted = new HostedRabbitMqService(_options.Object, _logger.Object, _connectionService.Object, _messageReceiver.Object);
             using var cancellation = new CancellationTokenSource();
-            cancellation.Cancel();
 
             _connectionService.Setup(c => c.GetChannel()).Returns(channelMock.Object);
             channelMock.Setup(channel => channel.QueueDeclare(QueueName, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<Dictionary<string, object>>()))
@@ -76,17 +76,18 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
             
             await hosted.StartAsync(cancellation.Token);
             channelMock.Verify();
+            await hosted.StopAsync(cancellation.Token);
         }
         
         [Fact]
         public async Task ConsumerTriggersMessageReceiver()
         {
             var channelMock = new Mock<IModel>();
-            var simulatedPayload = new byte[] {1, 1, 1};
+            var properties = new Mock<IBasicProperties>();
+            var simulatedPayload = new ReadOnlyMemory<byte>(new byte[] { 1, 1, 1 });
             AsyncEventingBasicConsumer? basicConsumer = null; // Once the channelMock registers a consumer, we'll fill it in here.
             using var hosted = new HostedRabbitMqService(_options.Object, _logger.Object, _connectionService.Object, _messageReceiver.Object);
             using var cancellation = new CancellationTokenSource();
-            cancellation.Cancel();
 
             _connectionService.Setup(c => c.GetChannel()).Returns(channelMock.Object);
             
@@ -100,21 +101,22 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
             _messageReceiver.Setup(m => m.HandleIncoming(typeof(DummyEvent), simulatedPayload)).Returns(Task.CompletedTask).Verifiable("Message receiver was not called!");
             
             await hosted.StartAsync(cancellation.Token);
-            basicConsumer?.HandleBasicDeliver(string.Empty, 420, false, string.Empty, QueueName, new BasicProperties(), simulatedPayload);
+            basicConsumer?.HandleBasicDeliver(string.Empty, 420, false, string.Empty, QueueName, properties.Object, simulatedPayload);
 
             channelMock.Verify();
             _messageReceiver.Verify();
+            await hosted.StopAsync(cancellation.Token);
         }
 
         [Fact]
         public async Task DomainEventHandlerErrorMovesMessageToBackout()
         {
             var channelMock = new Mock<IModel>();
-            var simulatedPayload = new byte[] {1, 1, 1};
+            var properties = new Mock<IBasicProperties>();
+            var simulatedPayload = new ReadOnlyMemory<byte>(new byte[] { 1, 1, 1 });
             AsyncEventingBasicConsumer? basicConsumer = null; // Once the channelMock registers a consumer, we'll fill it in here.
             using var hosted = new HostedRabbitMqService(_options.Object, _logger.Object, _connectionService.Object, _messageReceiver.Object);
             using var cancellation = new CancellationTokenSource();
-            cancellation.Cancel();
 
             _connectionService.Setup(c => c.GetChannel()).Returns(channelMock.Object);
             
@@ -132,21 +134,22 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
             channelMock.Setup(c => c.BasicPublish(string.Empty, $"{QueueName}.BACKOUT", false, null, simulatedPayload)).Verifiable("Backout message was not posted!");
             
             await hosted.StartAsync(cancellation.Token);
-            basicConsumer?.HandleBasicDeliver(string.Empty, 420, false, string.Empty, QueueName, new BasicProperties(), simulatedPayload);
+            basicConsumer?.HandleBasicDeliver(string.Empty, 420, false, string.Empty, QueueName, properties.Object, simulatedPayload);
 
             channelMock.Verify();
             _messageReceiver.Verify();
+            await hosted.StopAsync(cancellation.Token);
         }
 
         [Fact]
         public async Task PoisonedMessageErrorMovesMessageToBackout()
         {
             var channelMock = new Mock<IModel>();
-            var simulatedPayload = new byte[] {1, 1, 1};
+            var properties = new Mock<IBasicProperties>();
+            var simulatedPayload = new ReadOnlyMemory<byte>(new byte[] { 1, 1, 1 });
             AsyncEventingBasicConsumer? basicConsumer = null; // Once the channelMock registers a consumer, we'll fill it in here.
             using var hosted = new HostedRabbitMqService(_options.Object, _logger.Object, _connectionService.Object, _messageReceiver.Object);
             using var cancellation = new CancellationTokenSource();
-            cancellation.Cancel();
 
             _connectionService.Setup(c => c.GetChannel()).Returns(channelMock.Object);
             
@@ -164,10 +167,11 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted.Tests
             channelMock.Setup(c => c.BasicPublish(string.Empty, $"{QueueName}.BACKOUT", false, null, simulatedPayload)).Verifiable("Backout message was not posted!");
             
             await hosted.StartAsync(cancellation.Token);
-            basicConsumer?.HandleBasicDeliver(string.Empty, 420, false, string.Empty, QueueName, new BasicProperties(), simulatedPayload);
+            basicConsumer?.HandleBasicDeliver(string.Empty, 420, false, string.Empty, QueueName, properties.Object, simulatedPayload);
 
             channelMock.Verify();
             _messageReceiver.Verify();
+            await hosted.StopAsync(cancellation.Token);
         }
 
         public class DummyEvent

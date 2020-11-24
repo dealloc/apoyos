@@ -19,6 +19,6 @@ namespace Apoyos.Servicebus.Contracts
         /// <returns>A task that resolves once the <see cref="IDomainEventHandler{TEvent}"/>(s) are finished.</returns>
         /// <exception cref="PoisonedMessageException">Thrown when the received message is invalid and/or cannot be processed (eg. is poisoned).</exception>
         /// <exception cref="DomainEventHandlerException">Thrown when the <see cref="IDomainEventHandler{TEvent}"/> throws an exception processing the event.</exception>
-        Task HandleIncoming(Type eventType, byte[] payload);
+        Task HandleIncoming(Type eventType, ReadOnlyMemory<byte> payload);
     }
 }

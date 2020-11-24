@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Apoyos.Servicebus.Contracts
 {
@@ -13,6 +14,6 @@ namespace Apoyos.Servicebus.Contracts
         /// <param name="message">The message being sent to other services.</param>
         /// <typeparam name="TEvent">The type of message we're sending.</typeparam>
         /// <returns>A <see cref="Task"/> that resolves once the message has been posted.</returns>
-        Task SendMessageAsync<TEvent>(byte[] message) where TEvent : class, new();
+        Task SendMessageAsync<TEvent>(ReadOnlyMemory<byte> message) where TEvent : class, new();
     }
 }

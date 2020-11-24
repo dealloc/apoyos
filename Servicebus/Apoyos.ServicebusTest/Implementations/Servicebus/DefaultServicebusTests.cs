@@ -1,6 +1,7 @@
 ﻿#pragma warning disable CS1591 // Missing XML comment
 #pragma warning disable CA2007 // ConfigureAwait
 #pragma warning disable CS8618 // Nullable property not initialized
+using System;
 using System.Threading.Tasks;
 using Apoyos.Servicebus.Abstractions.Models;
 using Apoyos.Servicebus.Configuration;
@@ -39,7 +40,7 @@ namespace Apoyos.Servicebus.Implementations.Servicebus.Tests
         public async Task PublishAsyncTest()
         {
             var domainEvent = new DummyEvent {Name = "John Doe"};
-            var serializedEvent = new byte[] {1, 1, 1};
+            var serializedEvent = new ReadOnlyMemory<byte>(new byte[] { 1, 1, 1 });
 
             // Setup mocks
             _serializer.Setup(s => s.SerializeAsync(It.IsAny<MessageMetadata<DummyEvent>>(), default))

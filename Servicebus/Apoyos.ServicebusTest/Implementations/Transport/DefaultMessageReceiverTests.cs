@@ -22,7 +22,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
         private readonly ServiceCollection _services;
         private readonly Mock<IDomainEventSerializer> _serializer;
         private readonly Mock<IDomainEventHandler<DummyEvent>> _handler;
-        private byte[] _serializedDomainEvent;
+        private ReadOnlyMemory<byte> _serializedDomainEvent;
         private DummyEvent _domainEvent;
         private const string ServiceName = "XUNIT";
 
@@ -33,7 +33,7 @@ namespace Apoyos.Servicebus.Implementations.Transport.Tests
             _services = new ServiceCollection();
             _serializer = new Mock<IDomainEventSerializer>();
             _handler = new Mock<IDomainEventHandler<DummyEvent>>();
-            _serializedDomainEvent = new byte[] {1, 1, 1};
+            _serializedDomainEvent = new ReadOnlyMemory<byte>(new byte[] { 1, 1, 1 });
             _domainEvent = new DummyEvent {Name = "Hello world"};
 
             _services.AddTransient(p => _handler.Object);

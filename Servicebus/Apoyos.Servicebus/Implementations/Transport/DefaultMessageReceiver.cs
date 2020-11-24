@@ -40,7 +40,7 @@ namespace Apoyos.Servicebus.Implementations.Transport
         }
         
         /// <inheritdoc cref="IMessageReceiver.HandleIncoming" />
-        public async Task HandleIncoming(Type eventType, byte[] payload)
+        public async Task HandleIncoming(Type eventType, ReadOnlyMemory<byte> payload)
         {
             var metadataType = typeof(MessageMetadata<>).MakeGenericType(eventType);
             var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(eventType);

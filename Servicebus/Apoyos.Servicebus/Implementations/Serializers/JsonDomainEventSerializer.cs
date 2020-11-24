@@ -14,22 +14,26 @@ namespace Apoyos.Servicebus.Implementations.Serializers
     public class JsonDomainEventSerializer : IDomainEventSerializer
     {
         /// <inheritdoc cref="IDomainEventSerializer.SerializeAsync{TEvent}" />
-        public async Task<byte[]> SerializeAsync<TEvent>(TEvent domainEvent, CancellationToken cancellationToken = default) where TEvent : class, new()
+        public async Task<ReadOnlyMemory<byte>> SerializeAsync<TEvent>(TEvent domainEvent, CancellationToken cancellationToken = default) where TEvent : class, new()
         {
             await using var stream = new MemoryStream();
             await JsonSerializer.SerializeAsync(stream, domainEvent, options: null, cancellationToken).ConfigureAwait(false);
 
-            return stream.ToArray();
+            return new ReadOnlyMemory<byte>(stream.ToArray());
         }
 
         /// <inheritdoc cref="IDomainEventSerializer.DeserializeAsync{TEvent}" />
-        public async Task<TEvent> DeserializeAsync<TEvent>(byte[] serialized, CancellationToken cancellationToken = default) where TEvent : class, new()
+        public Task<TEvent> DeserializeAsync<TEvent>(ReadOnlyMemory<byte> serialized, CancellationToken cancellationToken = default) where TEvent : class, new()
         {
             try
             {
-                await using var stream = new MemoryStream(serialized);
-                return await JsonSerializer.DeserializeAsync<TEvent>(stream, options: null, cancellationToken)
-                    .ConfigureAwait(false);
+                var result = JsonSerializer.Deserialize<TEvent>(serialized.Span, options: null);
+                if (result is null)
+                {
+                    throw new NotSupportedException($"Could not deserialize given payload into {typeof(TEvent).FullName}");
+                }
+
+                return Task.FromResult(result);
             }
             catch (JsonException exception)
             {

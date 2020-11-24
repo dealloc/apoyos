@@ -96,7 +96,7 @@ namespace Apoyos.Servicebus.RabbitMQ.Hosted
         }
 
         /// <inheritdoc cref="IMessageTransport.SendMessageAsync{TEvent}" />
-        public Task SendMessageAsync<TEvent>(byte[] message) where TEvent : class, new()
+        public Task SendMessageAsync<TEvent>(ReadOnlyMemory<byte> message) where TEvent : class, new()
         {
             // TODO: creating a new channel for each message is expensive.
             using var channel = _connectionService.GetChannel();
