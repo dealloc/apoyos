@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-beta</Version>
+    <Version>1.0.0-rc</Version>
     <Authors>Wannes Gennar</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/dealloc/Apoyos</PackageProjectUrl>
