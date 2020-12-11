@@ -1,6 +1,7 @@
 ﻿#pragma warning disable CA1063 // Dispose pattern implementation.
 using System;
 using System.Threading.Tasks;
+using Apoyos.Servicebus.Configuration;
 using Apoyos.Servicebus.RabbitMQ.Configuration;
 using Apoyos.Servicebus.RabbitMQ.Contracts;
 using Microsoft.Extensions.Logging;
@@ -14,9 +15,10 @@ namespace Apoyos.Servicebus.RabbitMQ.Services
     /// </summary>
     public class ConnectionService : IConnectionService
     {
+        private IConnection? _connection;
         private readonly ILogger<ConnectionService> _logger;
-        private IConnection? _connection = null;
-        private readonly RabbitMqConfiguration _configuration;
+        private readonly RabbitMqServicebusConfiguration _configuration;
+        private readonly ServicebusConfiguration _servicebusOptions;
 
         /// <summary>
         /// Create a new instance of <see cref="ConnectionService"/>.
@@ -24,19 +26,20 @@ namespace Apoyos.Servicebus.RabbitMQ.Services
         public ConnectionService(IOptions<RabbitMqServicebusConfiguration> options, ILogger<ConnectionService> logger)
         {
             _logger = logger;
-            _configuration = options.Value.RabbitMQ;
+            _configuration = options.Value;
         }
 
         /// <inheritdoc cref="IConnectionService.ConnectAsync" />
         public Task ConnectAsync()
         {
-            _logger.LogDebug("Opening new connection to {Hostname}{VirtualHost}", _configuration.Hostname, _configuration.VirtualHost);
+            _logger.LogDebug("Opening new connection to {Hostname}{VirtualHost}", _configuration.RabbitMQ.Hostname, _configuration.RabbitMQ.VirtualHost);
             _connection = new ConnectionFactory
             {
-                HostName = _configuration.Hostname,
-                VirtualHost = _configuration.VirtualHost,
-                UserName = _configuration.Username,
-                Password = _configuration.Password,
+                HostName = _configuration.RabbitMQ.Hostname,
+                VirtualHost = _configuration.RabbitMQ.VirtualHost,
+                UserName = _configuration.RabbitMQ.Username,
+                Password = _configuration.RabbitMQ.Password,
+                ClientProvidedName = _servicebusOptions.ServiceName,
                 DispatchConsumersAsync = true
             }.CreateConnection();
 
